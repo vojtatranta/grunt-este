@@ -1,6 +1,6 @@
 {
   "name": "grunt-este",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Este Grunt tasks",
   "keywords": [
     "Google",
@@ -9,7 +9,8 @@
     "CoffeeScript",
     "Stylus",
     "Mocha",
-    "Soy"
+    "Soy",
+    "gruntplugin"
   ],
   "author": "Daniel Steigerwald <daniel@steigerwald.cz>",
   "repository": {
