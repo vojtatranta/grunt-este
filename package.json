@@ -25,7 +25,16 @@
     "stylus": "*",
     "temporary": "*",
     "wrench": "*",
-    "coffee2closure": "~0.0.1"
+    "coffee2closure": "~0.0.1",
+    "esprima": "~1.0.2"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.0",
+    "grunt-contrib-jshint": "~0.1.1",
+    "grunt-cli": "~0.1.6"
+  },
+  "scripts": {
+    "test": "node ./node_modules/.bin/grunt --gruntfile gruntfile.coffee test"
   },
   "engines": {
     "node": ">= 0.8.0"
