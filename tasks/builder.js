@@ -13,13 +13,11 @@ module.exports = function (grunt) {
   var Tempdir = require('temporary/lib/dir');
   var Tempfile = require('temporary/lib/file');
   var wrench = require('wrench');
-
+  var messages = require('../lib/messages');
+  
   grunt.registerMultiTask('esteBuilder', 'Google Closure dependency calculator.',
     function () {
 
-      var done = this.async();
-      var tempdir = new Tempdir();
-      var tempFlagFile = new Tempfile();
       var options = this.options({
 
         /**
@@ -93,81 +91,139 @@ module.exports = function (grunt) {
          */
         // input: ''
 
+        /**
+         * Path to directory with messages JSON's.
+         * @type {string}
+         */
+      , messagesPath: ''
+
+        /**
+         * List of locales being used for compilation. Locale has to have the
+         * same format as goog.LOCALE. Actualy, goog.LOCALE is defined for
+         * each locale before compilation.
+         * ex. ['en', 'de', 'cs']
+         * @type {Array.<string>}
+         */
+      , locales: []
+
+      });
+      var done = this.async();
+      var locales = options.locales.slice(0);
+      
+      build(options, function(result) {
+        if (!options.messagesPath || result === false) {
+          done(result);
+          return;
+        }
+        buildNextLanguage();
       });
 
-      // It's good to have real temp dir for build. We need to change them
-      // sometimes, and Windows has no problem with deleting.
-      updateOptionsRootToTemp(options.root, tempdir.path);
-      copyRootsToTemp(options.root, tempdir.path);
-      if (options.stripLoggers)
-        removeLoggersFromCode(options.root);
+      var buildNextLanguage = function(result) {
+        if (!locales.length || result === false) {
+          done(result);
+          return;
+        }
+        var locale = locales.shift();
+        build(options, buildNextLanguage, locale);
+      };
+        
+    }
+  );
 
-      var builderArgs = [
-        options.closureBuilderPath
-      ].concat(createArgs({
-        namespace: options.namespace
-      , root: options.root
-      , output_mode: 'list'
-      , output_file: tempFlagFile.path
+  var build = function(options, done, locale) {
+    var tempdir = new Tempdir();
+    var tempFlagFile = new Tempfile();
+    var outputFilePath = options.outputFilePath;
+    var root = options.root.slice(0);
+    var localeArgs = [];
+
+    updateOptionsRootToTemp(root, tempdir.path);
+    copyRootsToTemp(root, tempdir.path);
+    
+    if (options.stripLoggers)
+      removeLoggersFromCode(root);
+
+    if (locale) {
+      var languagePath = path.join(options.messagesPath, locale + '.json');
+      if (!grunt.file.exists(languagePath)) {
+        grunt.log.error('Missing dictionary: ' + languagePath);
+        done(false);
+        return;
+      }
+      var files = messages.getFiles(root, grunt);
+      var source = grunt.file.read(languagePath);
+      var dictionary = JSON.parse(source);
+      insertMessages(files, dictionary);
+      outputFilePath = outputFilePath.replace('.js', '_' + locale + '.js');
+      localeArgs.push('--define=goog.LOCALE="' + locale + '"');
+    }
+
+    var builderArgs = [
+      options.closureBuilderPath
+    ].concat(createArgs({
+      namespace: options.namespace
+    , root: root
+    , output_mode: 'list'
+    , output_file: tempFlagFile.path
+    }));
+
+    // Run closure builder to get list of files to compile.
+    grunt.util.spawn({
+      cmd: options.pythonBin
+    , args: builderArgs
+    }, function(error, result, code) {
+      if (isError(error, result.stderr, done))
+        return;
+
+      makeFlagFileFromListOfFilesToCompile(tempFlagFile.path);
+
+      // -client and -d32 options is a huge speed improvement for compilation
+      // https://groups.google.com/forum/?fromgroups=#!topic/closure-library-discuss/7w_O9-vzlj4
+      var compilerArgs = ['-jar'];
+      if (options.fastCompilation)
+        compilerArgs.push('-client', '-d32');
+      compilerArgs.push(options.compilerPath);
+        
+      compilerArgs = compilerArgs
+      .concat(options.compilerFlags)
+      .concat(localeArgs)
+      .concat(createArgs({
+        js_output_file: outputFilePath
+      , js: options.depsPath
+        // This fixes Windows command line length limitation.
+      , flagfile: tempFlagFile.path
       }));
 
-      // Run closure builder to get list of files to compile.
+      grunt.log.write('Compiling.');
+      var timer = setInterval(function() {
+        grunt.log.write('.');
+      }, 1000);
+
+      // Run Closure compiler. We can't use closurebuilder.py, because
+      // Windows has a limit for command line length (8191 characters).
+      var compilationStart = Date.now();
       grunt.util.spawn({
-        cmd: options.pythonBin
-      , args: builderArgs
+        cmd: 'java'
+      , args: compilerArgs
       }, function(error, result, code) {
+        clearInterval(timer);
+        grunt.log.write('\n');
+
+        // wrench because it removes nonempty directories
+        wrench.rmdirSyncRecursive(tempdir.path);
+
         if (isError(error, result.stderr, done))
           return;
 
-        makeFlagFileFromListOfFilesToCompile(tempFlagFile.path);
+        grunt.log.writeln(
+          'File ' + outputFilePath.yellow + ' created. ' +
+          ('(' + (Date.now() - compilationStart) + ' ms)').grey
+        );
 
-        // -client and -d32 options is a huge speed improvement for compilation
-        // https://groups.google.com/forum/?fromgroups=#!topic/closure-library-discuss/7w_O9-vzlj4
-        var compilerArgs = ['-jar'];
-        if (options.fastCompilation)
-          compilerArgs.push('-client', '-d32');
-        compilerArgs.push(options.compilerPath);
-          
-        compilerArgs = compilerArgs
-        .concat(options.compilerFlags)
-        .concat(createArgs({
-          js_output_file: options.outputFilePath
-        , js: options.depsPath
-          // This fixes Windows command line length limitation.
-        , flagfile: tempFlagFile.path
-        }));
-
-        grunt.log.write('Compiling.');
-        var timer = setInterval(function() {
-          grunt.log.write('.');
-        }, 1000);
-
-        // Run Closure compiler. We can't use closurebuilder.py, because
-        // Windows has a limit for command line length (8191 characters).
-        var compilationStart = Date.now();
-        grunt.util.spawn({
-          cmd: 'java'
-        , args: compilerArgs
-        }, function(error, result, code) {
-          clearInterval(timer);
-          grunt.log.write('\n');
-
-          // Wrench is good, because it removes nonempty directories.
-          wrench.rmdirSyncRecursive(tempdir.path);
-
-          if (isError(error, result.stderr, done))
-            return;
-
-          grunt.log.writeln(
-            'File ' + options.outputFilePath.yellow + ' created. ' +
-            ('(' + (Date.now() - compilationStart) + ' ms)').grey
-          );
-
-          showGzipSize(options.outputFilePath, done);
-        });
+        showGzipSize(outputFilePath, done);
       });
-    }
-  );
+    });
+  };
 
   var updateOptionsRootToTemp = function(roots, tempDirPath) {
     for(var i = 0; i < roots.length; i++) {
@@ -282,5 +338,56 @@ module.exports = function (grunt) {
         String((gzipSize / 1024).toFixed(2)).green + ' KB gzipped.');
       done();
     });
+  };
+
+  var insertMessages = function(files, dictionary) {
+    for (var i = 0; i < files.length; i++) {
+      var replacements = [];
+      var file = files[i];
+      var source = grunt.file.read(file);
+      if (source.indexOf('goog.getMsg') == -1)
+        continue;
+      
+      var tokens = messages.getTokens(source);
+      for (var j = 0; j < tokens.length; j++) {
+        var token = tokens[j];
+        if (token.type != 'Identifier' || token.value != 'getMsg')
+          continue;
+        
+        var message = messages.getMessage(tokens, j);
+        if (!message)
+          continue;
+        var description = messages.getMessageDescription(tokens, j);
+        if (!description)
+          continue;
+        var translatedMsg = dictionary[message] ?
+          dictionary[message][description] : null;
+        if (!translatedMsg)
+          continue;
+        var range = tokens[j + 2].range;
+        range[0]++;
+        range[1]--;
+        replacements.push({
+          start: range[0],
+          end: range[1],
+          msg: translatedMsg
+        });
+      }
+
+      var localizedSource = '';
+      for (j = 0; j < replacements.length; j++) {
+        var replacement = replacements[j];
+        if (j === 0)
+          localizedSource += source.slice(0, replacement.start);
+        localizedSource += replacement.msg;
+        var next = replacements[j + 1];
+        if (next)
+          localizedSource += source.slice(replacement.end, next.start);
+        else
+          localizedSource += source.slice(replacement.end);
+      }
+      localizedSource = localizedSource || source;
+      grunt.file.write(file, localizedSource);
+    }
   };
 };
