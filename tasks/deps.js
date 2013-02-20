@@ -27,7 +27,7 @@ module.exports = function (grunt) {
          * standard output.
          * @type {string}
          */
-        output_file: '',
+        outputFile: '',
 
         /**
          * Use this option only with root definiton. It will convert root into
@@ -41,33 +41,21 @@ module.exports = function (grunt) {
          * generated deps file will be relative to this path.
          * @type {string|Array.<string>}
          */
-        root: '',
-
-        /**
-         * A root directory to scan for JS source files, plus a prefix (if
-         * either contains a space, surround with quotes). Paths in generated
-         * deps file will be relative to the root, but preceded by the prefix.
-         * @type {string|Array.<string>}
-         */
-        root_with_prefix: '',
-
-        /**
-         * A path to a source file and an alternate path to the file in the
-         * generated deps file (if either contains a space, surround with
-         * whitespace).
-         * @type {string|Array.<string>}
-         */
-        path_with_depspath: ''
+        root: ''
 
       });
 
       var args = [options.depsWriterPath];
       var pythonBin = options.pythonBin;
       var prefix = options.prefix;
+      var outputFile = options.outputFile;
 
       delete options.depsWriterPath;
       delete options.pythonBin;
       delete options.prefix;
+      delete options.outputFile;
+
+      options.output_file = outputFile;
 
       for (var option in options) {
         var value = options[option];
@@ -91,12 +79,12 @@ module.exports = function (grunt) {
           done(false);
         }
         else {
-          grunt.log.writeln('File ' + options.output_file.yellow + ' created.');
+          grunt.log.writeln('File ' + outputFile.yellow + ' created.');
           done();
         }
       };
 
-      grunt.file.mkdir(path.dirname(options.output_file));
+      grunt.file.mkdir(path.dirname(outputFile));
       grunt.util.spawn({
         cmd: pythonBin,
         args: args

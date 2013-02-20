@@ -14,7 +14,7 @@ module.exports = function (grunt) {
   var Tempfile = require('temporary/lib/file');
   var wrench = require('wrench');
   var messages = require('../lib/messages');
-  
+
   grunt.registerMultiTask('esteBuilder', 'Google Closure dependency calculator.',
     function () {
 
@@ -101,7 +101,7 @@ module.exports = function (grunt) {
          * List of locales being used for compilation. Locale has to have the
          * same format as goog.LOCALE. Actualy, goog.LOCALE is defined for
          * each locale before compilation.
-         * ex. ['en', 'de', 'cs']
+         * ex. ['cs', de']
          * @type {Array.<string>}
          */
       , locales: []
@@ -109,7 +109,10 @@ module.exports = function (grunt) {
       });
       var done = this.async();
       var locales = options.locales.slice(0);
-      
+
+      // ensures outputFilePath parent directories
+      grunt.file.write(options.outputFilePath, '');
+
       build(options, function(result) {
         if (!options.messagesPath || result === false) {
           done(result);
@@ -126,7 +129,7 @@ module.exports = function (grunt) {
         var locale = locales.shift();
         build(options, buildNextLanguage, locale);
       };
-        
+
     }
   );
 
@@ -139,7 +142,7 @@ module.exports = function (grunt) {
 
     updateOptionsRootToTemp(root, tempdir.path);
     copyRootsToTemp(root, tempdir.path);
-    
+
     if (options.stripLoggers)
       removeLoggersFromCode(root);
 
@@ -183,7 +186,7 @@ module.exports = function (grunt) {
       if (options.fastCompilation)
         compilerArgs.push('-client', '-d32');
       compilerArgs.push(options.compilerPath);
-        
+
       compilerArgs = compilerArgs
       .concat(options.compilerFlags)
       .concat(localeArgs)
@@ -347,13 +350,13 @@ module.exports = function (grunt) {
       var source = grunt.file.read(file);
       if (source.indexOf('goog.getMsg') == -1)
         continue;
-      
+
       var tokens = messages.getTokens(source);
       for (var j = 0; j < tokens.length; j++) {
         var token = tokens[j];
         if (token.type != 'Identifier' || token.value != 'getMsg')
           continue;
-        
+
         var message = messages.getMessage(tokens, j);
         if (!message)
           continue;

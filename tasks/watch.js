@@ -105,7 +105,7 @@ module.exports = function (grunt) {
       },
       args: args
     }, function(error, result, code) {
-      grunt.log.writeln('').writeln('Waiting...');
+      grunt.log.writeln('').writeln(waiting);
     });
 
   };
