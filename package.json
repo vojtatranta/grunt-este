@@ -1,6 +1,6 @@
 {
   "name": "grunt-este",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Este Grunt tasks",
   "keywords": [
     "Google",
@@ -34,7 +34,7 @@
     "grunt-cli": "~0.1.6"
   },
   "scripts": {
-    "test": "node ./node_modules/.bin/grunt --gruntfile gruntfile.coffee test"
+    "test": "node ./node_modules/.bin/grunt test"
   },
   "engines": {
     "node": ">= 0.8.0"
