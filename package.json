@@ -30,11 +30,10 @@
   },
   "devDependencies": {
     "grunt": "~0.4.0",
-    "grunt-contrib-jshint": "~0.1.1",
-    "grunt-cli": "~0.1.6"
+    "grunt-contrib-jshint": "~0.1.1"
   },
   "scripts": {
-    "test": "node ./node_modules/.bin/grunt test"
+    "test": "grunt test"
   },
   "engines": {
     "node": ">= 0.8.0"
