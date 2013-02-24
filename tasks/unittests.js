@@ -77,10 +77,19 @@ module.exports = function (grunt) {
       absoluteFiles.forEach(mocha.addFile.bind(mocha));
 
       var done = this.async();
-      mocha.run(function(errCount) {
+      // Enforce stack if Mocha crash, for example with "Cannot read property
+      // 'required' of undefined" message.
+      try {
+        mocha.run(function(errCount) {
+          tempNodeBaseFile.unlink();
+          done(!errCount);
+        });
+      }
+      catch (e) {
         tempNodeBaseFile.unlink();
-        done(!errCount);
-      });
+        grunt.log.error(e.stack);
+        done(false);
+      }
 
     }
   );

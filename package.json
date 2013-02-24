@@ -25,7 +25,7 @@
     "stylus": "*",
     "temporary": "*",
     "wrench": "*",
-    "coffee2closure": "~0.0.1",
+    "coffee2closure": "~0.0.8",
     "esprima": "~1.0.2"
   },
   "devDependencies": {
