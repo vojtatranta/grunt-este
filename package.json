@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "chai": "*",
-    "coffee-script": "~1.4",
+    "coffee-script": "*",
     "gaze": "*",
     "mocha": "*",
     "stylus": "*",

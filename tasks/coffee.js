@@ -10,6 +10,7 @@ module.exports = function (grunt) {
 
   var coffee2closure = require('coffee2closure');
   var path = require('path');
+  var coffeeScript = require('coffee-script');
 
   grunt.registerMultiTask('esteCoffee', 'Compile CoffeeScript files into JavaScript.',
     function () {
@@ -67,7 +68,7 @@ module.exports = function (grunt) {
     var srcCode = grunt.file.read(srcFile);
 
     try {
-      return require('coffee-script').compile(srcCode, options);
+      return coffeeScript.compile(srcCode, options);
     } catch (e) {
       grunt.log.error(e);
       grunt.fail.warn('CoffeeScript failed to compile.');
