@@ -8,7 +8,7 @@
 
 module.exports = function(grunt) {
   var path = require('path');
-  
+
   grunt.registerMultiTask('esteStylus', 'Compile Stylus files into CSS', function() {
     var done = this.async();
 
@@ -26,11 +26,23 @@ module.exports = function(grunt) {
     // TODO: wait for official solution
     var files = this.files;
     var flags = Object.keys(this.flags);
-    if (flags.length == 1)
-      files = [{
-        src: [flags[0]],
-        dest: flags[0].replace('.styl', '.css')
-      }];
+    if (flags.length == 1) {
+      files = [];
+      var add = function(src) {
+        files.push({
+          src: [src],
+          dest: src.replace('.styl', '.css')
+        });
+      };
+      add(flags[0]);
+      // workaround to ensure file importing changed file is compiled too
+      this.files.forEach(function(item) {
+        if (item.src[0] == flags[0]) return;
+        src = grunt.file.read(item.src[0]);
+        if (src.indexOf('@import') < 0) return;
+        add(item.src[0]);
+      });
+    }
 
     grunt.util.async.forEachSeries(files, function(f, n) {
       var destFile = path.normalize(f.dest);
