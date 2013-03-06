@@ -1,6 +1,6 @@
 {
   "name": "grunt-este",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Este Grunt tasks",
   "keywords": [
     "Google",
@@ -25,12 +25,12 @@
     "stylus": "*",
     "temporary": "*",
     "wrench": "*",
-    "coffee2closure": "~0.0.8",
-    "esprima": "~1.0.2"
+    "coffee2closure": "*",
+    "esprima": "*"
   },
   "devDependencies": {
     "grunt": "~0.4.0",
-    "grunt-contrib-jshint": "~0.1.1"
+    "grunt-contrib-jshint": "*"
   },
   "scripts": {
     "test": "grunt test"
