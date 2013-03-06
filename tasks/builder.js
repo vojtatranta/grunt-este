@@ -110,6 +110,10 @@ module.exports = function (grunt) {
       var done = this.async();
       var locales = options.locales.slice(0);
 
+      if (options.namespace == '*') {
+        options.namespace = getAllNamespaces(options.depsPath);
+      }
+
       // ensures outputFilePath parent directories
       grunt.file.write(options.outputFilePath, '');
 
@@ -392,5 +396,28 @@ module.exports = function (grunt) {
       localizedSource = localizedSource || source;
       grunt.file.write(file, localizedSource);
     }
+  };
+
+  var getAllNamespaces = function(depsPath) {
+    var depsFile = fs.readFileSync(depsPath, 'utf8');
+    var allNamespaces = [];
+    var goog = {
+      addDependency: function(src, namespaces, dependencies) {
+        if (src.indexOf('_test.js') > -1 ||
+            src.indexOf('tester.js') > -1 ||
+            src.indexOf('closure-library/closure/') > -1 ||
+            src.indexOf('closure-library/third_party/closure/') > -1)
+              return;
+        namespaces.forEach(function(namespace) {
+          if (allNamespaces.indexOf(namespace) > -1)
+            return;
+          allNamespaces.push(namespace);
+        });
+      }
+    };
+    eval(depsFile);
+    idx = allNamespaces.indexOf('goog');
+    allNamespaces.splice(idx, 1);
+    return allNamespaces;
   };
 };
