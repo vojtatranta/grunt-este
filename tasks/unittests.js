@@ -73,7 +73,9 @@ module.exports = function (grunt) {
       files.push.apply(files, depsFiles);
       files.push.apply(files, testFiles);
 
-      var absoluteFiles = files.map(path.resolve);
+      var absoluteFiles = files.map(function(file) {
+        return path.resolve(file);
+      });
       absoluteFiles.forEach(mocha.addFile.bind(mocha));
 
       var done = this.async();
