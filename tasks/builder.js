@@ -327,7 +327,7 @@ module.exports = function (grunt) {
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line) continue;
-      flagFile.push('--js=' + line);
+      flagFile.push('--js="' + line + '"');
     }
     grunt.file.write(path, flagFile.join('\n'));
   };
