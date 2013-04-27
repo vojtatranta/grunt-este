@@ -41,7 +41,13 @@ module.exports = function (grunt) {
          * generated deps file will be relative to this path.
          * @type {string|Array.<string>}
          */
-        root: ''
+        root: '',
+        
+        /**
+         * Folder where is script executed
+         * @type {string}
+         */
+        execDir: './'
 
       });
 
@@ -49,11 +55,13 @@ module.exports = function (grunt) {
       var pythonBin = options.pythonBin;
       var prefix = options.prefix;
       var outputFile = options.outputFile;
+      var execDir = options.execDir;
 
       delete options.depsWriterPath;
       delete options.pythonBin;
       delete options.prefix;
       delete options.outputFile;
+      delete options.execDir;
 
       options.output_file = outputFile;
 
@@ -87,7 +95,10 @@ module.exports = function (grunt) {
       grunt.file.mkdir(path.dirname(outputFile));
       grunt.util.spawn({
         cmd: pythonBin,
-        args: args
+        args: args,
+        opts: {
+          cwd: execDir
+        }
       }, onSpawnDone);
 
     }
