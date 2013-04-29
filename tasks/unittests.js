@@ -19,7 +19,7 @@ module.exports = function (grunt) {
         basePath: 'bower_components/closure-library/closure/goog/base.js',
         depsPath: 'client/app/js/deps.js',
         prefix: '../../../../../',
-        mockFile: __dirname + '../lib/mocks.js',
+        mockFile: path.join(__dirname, '../', 'lib', 'mocks.js'),
 
         // Mocha options
         ui: 'tdd',
