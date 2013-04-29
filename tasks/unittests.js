@@ -19,6 +19,7 @@ module.exports = function (grunt) {
         basePath: 'bower_components/closure-library/closure/goog/base.js',
         depsPath: 'client/app/js/deps.js',
         prefix: '../../../../../',
+        mockFile: __dirname + '../lib/mocks.js',
 
         // Mocha options
         ui: 'tdd',
@@ -54,17 +55,18 @@ module.exports = function (grunt) {
 
       var namespaces = getNamespaces(testFiles, deps);
       var depsFiles = getDepsFiles(namespaces, deps);
+      var mocksPath = options.mockFile;
 
       delete options.basePath;
       delete options.depsPath;
       delete options.prefix;
+      delete options.mockFile;
 
       var mocha = new Mocha(options);
 
       var fixedBasePath = fixGoogBaseForNodeAndGetPath(
         basePath,
         tempNodeBaseFile);
-      var mocksPath = path.join(__dirname, '../', 'lib', 'mocks.js');
       var files = [
         fixedBasePath,
         mocksPath
