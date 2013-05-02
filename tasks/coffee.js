@@ -38,7 +38,7 @@ module.exports = function(grunt) {
       }];
     }
 
-    this.files.forEach(function (f) {
+    files.forEach(function (f) {
       var validFiles = removeInvalidFiles(f);
 
       if (options.sourceMap === true) {
