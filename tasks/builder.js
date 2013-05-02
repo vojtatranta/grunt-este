@@ -78,11 +78,15 @@ module.exports = function (grunt) {
         /**
          * There are several java flags, for huge compilation speed improvement.
          * -client flag should work everywhere. Take a look into jscompiler.py.
+         * -d32 works only for Java 1.6 sometimes.
+         * -XX:+TieredCompilation should help with Java 1.7
+         * By default, -client and -d32 (if available) are used.
+         * You can add your own set of flags. They will override defaults.
          * https://groups.google.com/forum/?fromgroups=#!topic/closure-library-discuss/7w_O9-vzlj4
-         * Try -d32 or -XX:+TieredCompilation, https://github.com/Steida/grunt-este/issues/1
+         * https://github.com/Steida/grunt-este/issues/1
          * @type {Array.<string>}
          */
-      , javaFlags: ['-client']
+      , javaFlags: null
 
         /**
          * One or more input files to calculate dependencies for. The
@@ -119,22 +123,41 @@ module.exports = function (grunt) {
       // ensures outputFilePath parent directories
       grunt.file.write(options.outputFilePath, '');
 
-      build(options, function(result) {
-        if (!options.messagesPath || result === false) {
-          done(result);
-          return;
-        }
-        buildNextLanguage();
-      });
+      var buildAll = function() {
+        build(options, function(result) {
+          if (!options.messagesPath || result === false) {
+            done(result);
+            return;
+          }
+          buildNextLanguage();
+        });
 
-      var buildNextLanguage = function(result) {
-        if (!locales.length || result === false) {
-          done(result);
-          return;
-        }
-        var locale = locales.shift();
-        build(options, buildNextLanguage, locale);
+        var buildNextLanguage = function(result) {
+          if (!locales.length || result === false) {
+            done(result);
+            return;
+          }
+          var locale = locales.shift();
+          build(options, buildNextLanguage, locale);
+        };
       };
+
+      if (options.javaFlags) {
+        buildAll();
+        return;
+      }
+
+      // -client should work and help everywhere
+      options.javaFlags = ['-client'];
+      // -d32 needs to be tested
+      grunt.util.spawn({
+        cmd: 'java'
+      , args: ['-d32', '-version']
+      }, function(error, result, code) {
+        if (!error)
+          options.javaFlags.push('-d32');
+        buildAll();
+      });
 
     }
   );
