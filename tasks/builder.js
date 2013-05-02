@@ -186,12 +186,9 @@ module.exports = function (grunt) {
 
       makeFlagFileFromListOfFilesToCompile(tempFlagFile.path);
 
-      var compilerArgs = [
-        '-jar',
-        options.compilerPath
-      ];
-      compilerArgs = compilerArgs
+      var compilerArgs = ['-jar']
         .concat(options.javaFlags)
+        .concat(options.compilerPath)
         .concat(options.compilerFlags)
         .concat(localeArgs)
         .concat(createArgs({
