@@ -6,6 +6,7 @@ module.exports = (grunt) ->
         evil: true
         laxcomma: true
         loopfunc: true
+        eqnull: true
       all: [
         'lib/**/*.js'
         'tasks/**/*.js'
