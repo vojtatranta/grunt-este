@@ -76,11 +76,13 @@ module.exports = function (grunt) {
       , pythonBin: 'python'
 
         /**
-         * Java CL options to much faster Closure compilation.
-         * false by default, because it needs Java 1.7+.
-         * @type {string}
+         * There are several java flags, for huge compilation speed improvement.
+         * -client flag should work everywhere. Take a look into jscompiler.py.
+         * https://groups.google.com/forum/?fromgroups=#!topic/closure-library-discuss/7w_O9-vzlj4
+         * Try -d32 or -XX:+TieredCompilation, https://github.com/Steida/grunt-este/issues/1
+         * @type {Array.<string>}
          */
-      , fastCompilation: false
+      , javaFlags: ['-client']
 
         /**
          * One or more input files to calculate dependencies for. The
@@ -184,22 +186,20 @@ module.exports = function (grunt) {
 
       makeFlagFileFromListOfFilesToCompile(tempFlagFile.path);
 
-      // -client and -d32 options is a huge speed improvement for compilation
-      // https://groups.google.com/forum/?fromgroups=#!topic/closure-library-discuss/7w_O9-vzlj4
-      var compilerArgs = ['-jar'];
-      if (options.fastCompilation)
-        compilerArgs.push('-client', '-d32');
-      compilerArgs.push(options.compilerPath);
-
+      var compilerArgs = [
+        '-jar',
+        options.compilerPath
+      ];
       compilerArgs = compilerArgs
-      .concat(options.compilerFlags)
-      .concat(localeArgs)
-      .concat(createArgs({
-        js_output_file: outputFilePath
-      , js: options.depsPath
-        // This fixes Windows command line length limitation.
-      , flagfile: tempFlagFile.path
-      }));
+        .concat(options.javaFlags)
+        .concat(options.compilerFlags)
+        .concat(localeArgs)
+        .concat(createArgs({
+          js_output_file: outputFilePath
+        , js: options.depsPath
+          // This fixes Windows command line length limitation.
+        , flagfile: tempFlagFile.path
+        }));
 
       grunt.log.write('Compiling.');
       var timer = setInterval(function() {
