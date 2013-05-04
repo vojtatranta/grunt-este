@@ -334,6 +334,7 @@ module.exports = function (grunt) {
       wrench.copyDirSyncRecursive(from, root, {
         excludeHiddenUnix: true,
         whitelist: true,
+        forceDelete: true,
         // Only dirs and .js files.
         filter: /^[\w\-]+$|\.js$/i
       });
