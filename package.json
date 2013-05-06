@@ -1,6 +1,6 @@
 {
   "name": "grunt-este",
-  "version": "0.3.2",
+  "version": "0.3.1",
   "description": "Este Grunt tasks",
   "keywords": [
     "Google",
@@ -18,20 +18,20 @@
     "url": "https://github.com/Steida/grunt-este.git"
   },
   "dependencies": {
-    "chai": "*",
-    "coffee-script": "*",
-    "gaze": "*",
-    "mocha": "*",
-    "stylus": "*",
-    "temporary": "*",
-    "wrench": "*",
-    "coffee2closure": "*",
-    "esprima": "*"
+    "chai": "~1.6.0",
+    "coffee-script": "~1.6.2",
+    "gaze": "~0.3.4",
+    "mocha": "~1.9.0",
+    "stylus": "~0.32.1",
+    "temporary": "0.0.5",
+    "wrench": "~1.5.1",
+    "coffee2closure": "0.0.14",
+    "esprima": "~1.0.2"
   },
   "devDependencies": {
-    "grunt": "~0.4.0",
-    "grunt-contrib-jshint": "*",
-    "grunt-release": "*"
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.4.3",
+    "grunt-release": "~0.3.3"
   },
   "scripts": {
     "test": "grunt test"
