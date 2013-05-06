@@ -22,12 +22,6 @@ module.exports = function (grunt) {
       var args = ['-jar', options.soyToJsJarPath];
       var filesSrc = this.filesSrc;
 
-      // dirty hack to pass only changed file
-      // TODO: wait for official solution
-      var flags = Object.keys(this.flags);
-      if (flags.length == 1)
-        filesSrc = flags;
-
       delete options.soyToJsJarPath;
 
       for (var option in options) {

@@ -1,7 +1,13 @@
 /*
  * grunt-este
  * https://github.com/este/grunt-este
- * TODO: consider Testacular, PhantomJS, JSDOM
+ * TODO: consider Testacular, PhantomJS, JSDOM or https://github.com/theintern/intern
+ * NOTE: Mocha is runned now nospawn.
+ *
+ * Dev Notes
+ *  Ignore these errors now: 2013-05-05 19:50 node[651] (CarbonCore.framework) FSEventStreamStart: register_with_server: ERROR: f2d_register_rpc() => (null) (-21)
+ *  https://github.com/gruntjs/grunt-contrib-watch#how-do-i-fix-the-error-emfile-too-many-opened-files
+ *  https://github.com/gruntjs/grunt-contrib-watch/issues/85
  *
  * Copyright (c) 2013 Daniel Steigerwald
  */
@@ -38,38 +44,35 @@ module.exports = function (grunt) {
       var testFiles = this.filesSrc;
       var tempNodeBaseFile = new Tempfile();
 
-      // dirty hack to pass only changed file
-      // TODO: wait for official solution
-      var flags = Object.keys(this.flags);
-      if (flags.length == 1) {
-        var filePath = flags[0];
-        // both foo.js and foo_test.js supported
-        if (filePath.indexOf('_test.js') < 0)
-          filePath = filePath.replace('.js', '_test.js');
-        if (!grunt.file.exists(filePath)) {
-          grunt.log.writeln('No tests.');
-          return;
-        }
-        testFiles = [filePath];
+      // fix for watch mode
+      testFiles = testFiles.map(function(file) {
+        if (file.indexOf('_test.') == -1)
+          file = file.replace('.', '_test.');
+        var chunks = file.split('.');
+        chunks[chunks.length - 1] = 'js';
+        return chunks.join('.');
+      });
+
+      if (testFiles.length == 1 && !grunt.file.exists(testFiles[0])) {
+        grunt.log.writeln('No tests.');
+        return;
       }
 
       var namespaces = getNamespaces(testFiles, deps);
       var depsFiles = getDepsFiles(namespaces, deps);
-      var mocksPath = options.mockFile;
+      var mockFile = options.mockFile;
 
       delete options.basePath;
       delete options.depsPath;
       delete options.prefix;
       delete options.mockFile;
 
-      var mocha = new Mocha(options);
-
       var fixedBasePath = fixGoogBaseForNodeAndGetPath(
         basePath,
         tempNodeBaseFile);
       var files = [
         fixedBasePath,
-        mocksPath
+        mockFile
       ];
 
       files.push.apply(files, depsFiles);
@@ -78,19 +81,45 @@ module.exports = function (grunt) {
       var absoluteFiles = files.map(function(file) {
         return path.resolve(file);
       });
-      absoluteFiles.forEach(mocha.addFile.bind(mocha));
+
+      // Clean globals created during tests, goog, este, soy etc...
+      // Also fixes goog.base error "Namespace xy already declared.".
+      var originGlobal = {};
+      for (var key in global)
+        originGlobal[key] = true;
+
+      var clean = function() {
+        tempNodeBaseFile.unlink();
+        for (var key in global) {
+          if (key in originGlobal) continue;
+          delete global[key];
+        }
+      };
 
       var done = this.async();
+      var mocha = new Mocha(options);
+
+      // fixes strange issue, if mocha is not runned in spawn process, second
+      // run (first on watch) returns "0 tests..."
+      mocha.suite.on('pre-require', function(context, file) {
+        // Module was cached, remove.
+        if (require.cache[file]) {
+          delete require.cache[file];
+        }
+      });
+
+      absoluteFiles.forEach(mocha.addFile.bind(mocha));
+
       // Enforce stack if Mocha crash, for example with "Cannot read property
       // 'required' of undefined" message.
       try {
         mocha.run(function(errCount) {
-          tempNodeBaseFile.unlink();
+          clean();
           done(!errCount);
         });
       }
       catch (e) {
-        tempNodeBaseFile.unlink();
+        clean();
         grunt.log.error(e.stack);
         done(false);
       }
