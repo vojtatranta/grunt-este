@@ -54,12 +54,10 @@ module.exports = function (grunt) {
             filesSrc.forEach(function(item) {
               grunt.log.writeln('File ' + item.cyan + ' compiled.');
             });
-            grunt.log.writeln(Date.now() - now);
             done();
           }
         };
 
-        var now = Date.now();
         grunt.util.spawn({
           cmd: 'java',
           args: args
