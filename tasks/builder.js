@@ -7,13 +7,14 @@
  */
 module.exports = function (grunt) {
 
-  var path = require('path');
+  var detectFastJavaFlags = require('../lib/detectFastJavaFlags');
   var fs = require('fs');
   var gzip = require('zlib').gzip;
+  var messages = require('../lib/messages');
+  var path = require('path');
   var Tempdir = require('temporary/lib/dir');
   var Tempfile = require('temporary/lib/file');
   var wrench = require('wrench');
-  var messages = require('../lib/messages');
 
   grunt.registerMultiTask('esteBuilder', 'Google Closure dependency calculator.',
     function () {
@@ -147,15 +148,8 @@ module.exports = function (grunt) {
         return;
       }
 
-      // -client should work and help everywhere
-      options.javaFlags = ['-client'];
-      // -d32 needs to be tested
-      grunt.util.spawn({
-        cmd: 'java'
-      , args: ['-d32', '-version']
-      }, function(error, result, code) {
-        if (!error)
-          options.javaFlags.push('-d32');
+      detectFastJavaFlags(grunt, function(flags) {
+        options.javaFlags = flags;
         buildAll();
       });
 

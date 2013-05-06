@@ -7,6 +7,8 @@
  */
 module.exports = function (grunt) {
 
+  var detectFastJavaFlags = require('../lib/detectFastJavaFlags');
+
   grunt.registerMultiTask('esteTemplates', 'Google Closure Template compiler.',
     function () {
 
@@ -19,40 +21,52 @@ module.exports = function (grunt) {
         shouldGenerateGoogMsgDefs: true,
         shouldProvideRequireSoyNamespaces: true
       });
-      var args = ['-jar', options.soyToJsJarPath];
       var filesSrc = this.filesSrc;
-
-      delete options.soyToJsJarPath;
-
-      for (var option in options) {
-        args.push('--' + option);
-        if (options[option] !== true)
-          args.push(options[option]);
-      }
-      args.push.apply(args, filesSrc);
-
       var done = this.async();
-      var onSpawnDone = function(error, result, code) {
-        if (error) {
-          var msg = extractErrorMessage(error);
-          grunt.log.error(msg);
-          done(false);
+      var fastJavaFlags;
+
+      detectFastJavaFlags(grunt, function(flags) {
+        fastJavaFlags = flags;
+        build();
+      });
+
+      var build = function() {
+        var args = ['-jar']
+          .concat(fastJavaFlags)
+          .concat(options.soyToJsJarPath);
+
+        delete options.soyToJsJarPath;
+
+        for (var option in options) {
+          args.push('--' + option);
+          if (options[option] !== true)
+            args.push(options[option]);
         }
-        else {
-          filesSrc.forEach(function(item) {
-            grunt.log.writeln('File ' + item.cyan + ' compiled.');
-          });
-          done();
-        }
+        args.push.apply(args, filesSrc);
+
+        var onSpawnDone = function(error, result, code) {
+          if (error) {
+            var msg = extractErrorMessage(error);
+            grunt.log.error(msg);
+            done(false);
+          }
+          else {
+            filesSrc.forEach(function(item) {
+              grunt.log.writeln('File ' + item.cyan + ' compiled.');
+            });
+            grunt.log.writeln(Date.now() - now);
+            done();
+          }
+        };
+
+        var now = Date.now();
+        grunt.util.spawn({
+          cmd: 'java',
+          args: args
+        }, onSpawnDone);
+
       };
-
-      grunt.util.spawn({
-        cmd: 'java',
-        args: args
-      }, onSpawnDone);
-
-    }
-  );
+    });
 
   /**
     Remove stack trace.
