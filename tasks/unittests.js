@@ -101,6 +101,8 @@ module.exports = function (grunt) {
 
       // fixes strange issue, if mocha is not runned in spawn process, second
       // run (first on watch) returns "0 tests..."
+      // LAST: does not work anymore on mac
+      // BTW: win is ok, no grunt errors, no unit tests errors :(
       mocha.suite.on('pre-require', function(context, file) {
         // Module was cached, remove.
         if (require.cache[file]) {
