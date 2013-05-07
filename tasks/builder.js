@@ -7,7 +7,7 @@
  */
 module.exports = function (grunt) {
 
-  var detectFastJavaFlags = require('../lib/detectFastJavaFlags');
+  var detectFastJavaFlags = require('../lib/detectfastjavaflags');
   var fs = require('fs');
   var gzip = require('zlib').gzip;
   var messages = require('../lib/messages');
