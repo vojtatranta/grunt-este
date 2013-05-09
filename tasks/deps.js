@@ -42,7 +42,7 @@ module.exports = function (grunt) {
          * @type {string|Array.<string>}
          */
         root: '',
-        
+
         /**
          * Folder where is script executed
          * @type {string}
