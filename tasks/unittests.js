@@ -16,6 +16,7 @@ module.exports = function (grunt) {
   var fs = require('fs');
   var Mocha = require('mocha');
   var path = require('path');
+  var requireUncache = require('require-uncache');
   var Tempfile = require('temporary/lib/file');
 
   grunt.registerMultiTask('esteUnitTests', 'Fast unit testing.',
@@ -99,15 +100,10 @@ module.exports = function (grunt) {
       var done = this.async();
       var mocha = new Mocha(options);
 
-      // fixes strange issue, if mocha is not runned in spawn process, second
-      // run (first on watch) returns "0 tests..."
-      // LAST: does not work anymore on mac
-      // BTW: win is ok, no grunt errors, no unit tests errors :(
+      // Workaround for mocha "0 tests complete" issue.
+      // github.com/visionmedia/mocha/issues/445#issuecomment-17693393
       mocha.suite.on('pre-require', function(context, file) {
-        // Module was cached, remove.
-        if (require.cache[file]) {
-          delete require.cache[file];
-        }
+        requireUncache(file);
       });
 
       absoluteFiles.forEach(mocha.addFile.bind(mocha));
