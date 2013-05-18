@@ -9,7 +9,7 @@ module.exports = function (grunt) {
 
   var detectFastJavaFlags = require('../lib/detectfastjavaflags');
 
-  grunt.registerMultiTask('esteTemplates', 'Google Closure Template compiler.',
+  grunt.registerMultiTask('esteTemplates', 'Google Closure Templates compiler.',
     function () {
 
       var options = this.options({
@@ -23,48 +23,47 @@ module.exports = function (grunt) {
       });
       var filesSrc = this.filesSrc;
       var done = this.async();
-      var fastJavaFlags;
 
-      detectFastJavaFlags(grunt, function(flags) {
-        fastJavaFlags = flags;
-        build();
+      detectFastJavaFlags(grunt, function(fastJavaFlags) {
+        build(options, filesSrc, done, fastJavaFlags);
       });
 
-      var build = function() {
-        var args = ['-jar']
-          .concat(fastJavaFlags)
-          .concat(options.soyToJsJarPath);
-
-        delete options.soyToJsJarPath;
-
-        for (var option in options) {
-          args.push('--' + option);
-          if (options[option] !== true)
-            args.push(options[option]);
-        }
-        args.push.apply(args, filesSrc);
-
-        var onSpawnDone = function(error, result, code) {
-          if (error) {
-            var msg = extractErrorMessage(error);
-            grunt.log.error(msg);
-            done(false);
-          }
-          else {
-            filesSrc.forEach(function(item) {
-              grunt.log.writeln('File ' + item.cyan + ' compiled.');
-            });
-            done();
-          }
-        };
-
-        grunt.util.spawn({
-          cmd: 'java',
-          args: args
-        }, onSpawnDone);
-
-      };
     });
+
+  var build = function(options, filesSrc, done, fastJavaFlags) {
+    var args = ['-jar']
+      .concat(fastJavaFlags)
+      .concat(options.soyToJsJarPath);
+
+    delete options.soyToJsJarPath;
+
+    for (var option in options) {
+      args.push('--' + option);
+      if (options[option] !== true)
+        args.push(options[option]);
+    }
+    args.push.apply(args, filesSrc);
+
+    var onSpawnDone = function(error, result, code) {
+      if (error) {
+        var msg = extractErrorMessage(error);
+        grunt.log.error(msg);
+        done(false);
+      }
+      else {
+        filesSrc.forEach(function(item) {
+          grunt.log.writeln('File ' + item.cyan + ' compiled.');
+        });
+        done();
+      }
+    };
+
+    grunt.util.spawn({
+      cmd: 'java',
+      args: args
+    }, onSpawnDone);
+
+  };
 
   /**
     Remove stack trace.
