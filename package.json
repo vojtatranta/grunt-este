@@ -20,13 +20,13 @@
   "dependencies": {
     "chai": "~1.6.0",
     "coffee-script": "~1.6.2",
-    "coffee2closure": "0.0.14",
+    "coffee2closure": "~0.0.14",
     "esprima": "~1.0.2",
-    "gaze": "~0.3.4",
     "mocha": "~1.9.0",
-    "require-uncache": "0.0.1",
+    "require-uncache": "~0.0.1",
     "stylus": "~0.32.1",
-    "temporary": "0.0.5",
+    "temporary": "~0.0.5",
+    "tiny-lr": "git://github.com/Steida/tiny-lr.git",
     "wrench": "~1.5.1"
   },
   "devDependencies": {
