@@ -217,7 +217,7 @@ module.exports = function(grunt) {
       return options.livereload.extensions.indexOf(ext) != -1;
     });
     if (!filepaths.length) {
-      grunt.log.writeln('Nothing to live reload.')
+      grunt.log.writeln('Nothing to live reload.');
       return;
     }
     lrServer.changed({
