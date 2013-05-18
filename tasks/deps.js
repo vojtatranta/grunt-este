@@ -82,6 +82,8 @@ module.exports = function (grunt) {
 
       var done = this.async();
       var onSpawnDone = function(error, result, code) {
+        // Missing required namespace and others error are reported in
+        // esteBuilder tasks.
         if (error) {
           grunt.log.error(error);
           done(false);
