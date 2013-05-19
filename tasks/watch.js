@@ -42,6 +42,7 @@ module.exports = function(grunt) {
         'client/**/{js,css}/**/'
       ],
       livereload: {
+        enabled: true,
         port: 35729,
         extensions: ['js', 'css']
       }
@@ -55,7 +56,8 @@ module.exports = function(grunt) {
     if (firstRun) {
       firstRun = false;
       restartWatchers();
-      runLiveReloadServer();
+      if (options.livereload.enabled)
+        runLiveReloadServer();
       keepThisTaskRunForeverViaHideousHack();
     }
 
@@ -64,6 +66,8 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('esteWatchLiveReload', function() {
+    if (!options.livereload.enabled)
+      return;
     if (changedFilesForLiveReload.length) {
       changedFilesForLiveReload = grunt.util._.uniq(changedFilesForLiveReload);
       notifyLiveReloadServer(changedFilesForLiveReload);
@@ -196,7 +200,8 @@ module.exports = function(grunt) {
 
   var onFileChange = function(filepath) {
 
-    changedFilesForLiveReload.push(filepath);
+    if (options.livereload.enabled)
+      changedFilesForLiveReload.push(filepath);
 
     // postpone changes occured during tasks execution
     if (esteWatchTaskIsRunning) {
@@ -222,7 +227,9 @@ module.exports = function(grunt) {
     // run tasks for changed file
     grunt.log.ok('File changed: ' + filepath);
     var tasks = getFilepathTasks(filepath);
-    tasks.push('esteWatchLiveReload', 'esteWatch');
+    if (options.livereload.enabled)
+      tasks.push('esteWatchLiveReload');
+    tasks.push('esteWatch');
     done();
     grunt.task.run(tasks);
   };
