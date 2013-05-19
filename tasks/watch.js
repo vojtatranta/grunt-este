@@ -215,6 +215,7 @@ module.exports = function(grunt) {
       // We have to track file which dispatched watch task, because on Windows
       // file change dispatches two or more events, which is actually ok, but
       // we have to ignore these changes later.
+      // https://github.com/joyent/node/issues/2126
       filesChangedWithinWatchTask.dispatcher = filepath;
     }
 
