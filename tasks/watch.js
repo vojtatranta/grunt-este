@@ -10,6 +10,7 @@
     Without LiveReload console.log mess.
     And files created in new directories are detected.
     Also does not use polled fs.fileWatch, which saves battery a lot.
+    Silent mode! Only errors are shown in terminal :)
 
   Copyright (c) 2013 Daniel Steigerwald
 */
@@ -22,7 +23,6 @@ module.exports = function(grunt) {
   var RESTART_WATCHERS_DEBOUNCE = 10;
 
   var changedFilesForLiveReload = [];
-  var circularsCache = Object.create(null);
   var done;
   var esteWatchTaskIsRunning = false;
   var filesChangedWithinWatchTask = [];
@@ -83,6 +83,23 @@ module.exports = function(grunt) {
       allDirs.length + ' dirs watched within ' + duration + ' ms.').cyan);
   };
 
+  var notifyLiveReloadServer = function(filepaths) {
+    grunt.verbose.ok('notifyLiveReloadServer: ' + filepaths);
+    filepaths = filepaths.filter(function(filepath) {
+      var ext = path.extname(filepath).slice(1);
+      return options.livereload.extensions.indexOf(ext) != -1;
+    });
+    if (!filepaths.length) {
+      grunt.log.writeln('Nothing to live reload.');
+      return;
+    }
+    lrServer.changed({
+      body: {
+        files: filepaths
+      }
+    });
+  };
+
   // It's safer to wait in case of bulk changes.
   var restartDirsWatchersDebounced = grunt.util._.debounce(
     restartWatchers, RESTART_WATCHERS_DEBOUNCE);
@@ -125,22 +142,22 @@ module.exports = function(grunt) {
     };
   };
 
+  var rerun = function() {
+    grunt.task.clearQueue();
+    grunt.task.run('esteWatch');
+  };
+
   var dispatchWaitingChanges = function() {
     var waitingFiles = grunt.util._.uniq(filesChangedWithinWatchTask);
     grunt.verbose.ok('Files changed within watch task:');
     grunt.verbose.ok(waitingFiles);
-    var ignoredFiles = filesChangedWithinWatchTask.fileWhichDispatchedChanging;
+    var ignoredFiles = filesChangedWithinWatchTask.dispatcher;
     filesChangedWithinWatchTask = [];
     waitingFiles.forEach(function(filepath) {
       if (filepath == ignoredFiles)
         return;
       onFileChange(filepath);
     });
-  };
-
-  var rerun = function() {
-    grunt.task.clearQueue();
-    grunt.task.run('esteWatch');
   };
 
   var closeWatchers = function() {
@@ -190,13 +207,15 @@ module.exports = function(grunt) {
 
     if (grunt.task.current.name == 'esteWatch') {
       esteWatchTaskIsRunning = true;
-      filesChangedWithinWatchTask.fileWhichDispatchedChanging = filepath;
+      // We have to track file which dispatched watch task, because on Windows
+      // file change dispatches two or more events, which is actually ok, but
+      // we have to ignore these changes later.
+      filesChangedWithinWatchTask.dispatcher = filepath;
     }
 
-    // detect user's 'unit of work' to reset circular deps detection
+    // detect user's 'unit of work'
     var userAction = (Date.now() - watchTaskStart) > 500;
     if (userAction) {
-      circularsCache = Object.create(null);
       grunt.log.ok('User action.'.yellow);
     }
 
@@ -206,33 +225,6 @@ module.exports = function(grunt) {
     tasks.push('esteWatchLiveReload', 'esteWatch');
     done();
     grunt.task.run(tasks);
-
-    //   // detect circular tasks, to prevent infinite loop
-    //   if (circularsCache[filepathsItem]) {
-    //     grunt.log.error('Circular dependency detected: ' + filepathsItem);
-    //     grunt.log.error('Check your esteWatch:options:dir configuration.');
-    //     grunt.log.error('For example, if css task generate also watched css file, we are in loop.');
-    //     grunt.log.error('But you probably pressed cmd-s to fastly.');
-    //     return;
-    //   }
-    //   circularsCache[filepathsItem] = true;
-  };
-
-  var notifyLiveReloadServer = function(filepaths) {
-    grunt.verbose.ok('notifyLiveReloadServer: ' + filepaths);
-    filepaths = filepaths.filter(function(filepath) {
-      var ext = path.extname(filepath).slice(1);
-      return options.livereload.extensions.indexOf(ext) != -1;
-    });
-    if (!filepaths.length) {
-      grunt.log.writeln('Nothing to live reload.');
-      return;
-    }
-    lrServer.changed({
-      body: {
-        files: filepaths
-      }
-    });
   };
 
   var getFilepathTasks = function(filepath) {
