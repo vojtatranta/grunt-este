@@ -1,16 +1,15 @@
 /**
-  @fileoverview Este files watcher. Node 0.9.2+ is required.
+  @fileoverview Este file watcher.
 
   What's wrong with grunt-contrib-watch?
    It's slow, buggy, and not handy.
-   And simply does not work. (TODO: add opened issues)
 
   Why Este watch is better than grunt-contrib-coffee?
     It's fast, reliable, and handy.
     With concise configuration.
     Without LiveReload console.log mess.
-    Also files created in new directories are detected.
-    And saves battery.
+    And files created in new directories are detected.
+    Also does not use polled fs.fileWatch, which saves battery a lot.
 
   Copyright (c) 2013 Daniel Steigerwald
 */
@@ -23,10 +22,10 @@ module.exports = function(grunt) {
   var RESTART_WATCHERS_DEBOUNCE = 10;
 
   var changedFilesForLiveReload = [];
-  var circularsCache = {};
-  var repeatedCache = {};
+  var circularsCache = Object.create(null);
   var done;
-  var filesChangedWithinTask = {};
+  var esteWatchTaskIsRunning = false
+  var filesChangedWithinWatchTask = [];
   var firstRun = true;
   var lrServer;
   var options;
@@ -48,7 +47,10 @@ module.exports = function(grunt) {
       }
     });
     done = this.async();
-    repeatedCache = {};
+    esteWatchTaskIsRunning = false;
+    watchTaskStart = Date.now();
+
+    grunt.log.ok('Waiting...');
 
     if (firstRun) {
       firstRun = false;
@@ -57,19 +59,27 @@ module.exports = function(grunt) {
       keepThisTaskRunForeverViaHideousHack();
     }
 
-    grunt.log.ok('Waiting...');
-    watchTaskStart = Date.now();
+    var waitingFiles = grunt.util._.uniq(filesChangedWithinWatchTask);
+    grunt.verbose.ok('Files changed within watch task:');
+    grunt.verbose.ok(waitingFiles);
+    var ignore = filesChangedWithinWatchTask.fileWhichDispatchedChanging;
+    filesChangedWithinWatchTask = []
+    waitingFiles.forEach(function(filepath) {
+      if (filepath == ignore)
+        return;
+      onFileChange(filepath);
+    });
 
   });
 
   grunt.registerTask('esteWatchLiveReload', function() {
     if (changedFilesForLiveReload.length) {
+      changedFilesForLiveReload = grunt.util._.uniq(changedFilesForLiveReload);
       notifyLiveReloadServer(changedFilesForLiveReload);
       changedFilesForLiveReload = [];
     }
   });
 
-  // watchers are restarted on start and dir change
   // TODO: handle hypothetic situation, when task create dir
   var restartWatchers = function() {
     var start = Date.now();
@@ -83,7 +93,7 @@ module.exports = function(grunt) {
   };
 
   // It's safer to wait in case of bulk changes.
-  var restartWatchersDebounced = grunt.util._.debounce(
+  var restartDirsWatchersDebounced = grunt.util._.debounce(
     restartWatchers, RESTART_WATCHERS_DEBOUNCE);
 
   var runLiveReloadServer = function() {
@@ -147,7 +157,9 @@ module.exports = function(grunt) {
 
   var onDirChange = function(event, filename, dir) {
     var filepath = path.join(dir || '', filename || '');
-    // fs.statSync fails on deleted symlink dirs with "Abort trap: 6" exception
+    // Normalize \\ paths to / paths. Yet another Windows fix.
+    filepath = filepath.replace(/\\/g, '/');
+    // fs.statSync fails on deleted symlink dir with "Abort trap: 6" exception
     // https://github.com/bevry/watchr/issues/42
     // https://github.com/joyent/node/issues/4261
     var fileExists = fs.existsSync(filepath);
@@ -155,59 +167,51 @@ module.exports = function(grunt) {
       return;
     if (fs.statSync(filepath).isDirectory()) {
       grunt.log.ok('Dir changed: ' + filepath);
-      restartWatchersDebounced();
+      restartDirsWatchersDebounced();
       return;
     }
     onFileChange(filepath);
   };
 
   var onFileChange = function(filepath) {
-    if (repeatedCache[filepath])
-      return;
-    repeatedCache[filepath] = true;
 
-    grunt.verbose.writeln('onFileChange, filepath: ' + filepath);
+    changedFilesForLiveReload.push(filepath);
 
     // postpone changes occured during tasks execution
-    if (grunt.task.current.name != 'esteWatch') {
-      filesChangedWithinTask[filepath] = true;
+    if (esteWatchTaskIsRunning) {
+      grunt.verbose.writeln('filesChangedWithinWatchTask.push ' + filepath);
+      filesChangedWithinWatchTask.push(filepath);
       return;
     }
 
-    // detect user 'unit of work', to reset circular deps detection
+    if (grunt.task.current.name == 'esteWatch') {
+      esteWatchTaskIsRunning = true;
+      filesChangedWithinWatchTask.fileWhichDispatchedChanging = filepath;
+    }
+
+    // detect user's 'unit of work' to reset circular deps detection
     var userAction = (Date.now() - watchTaskStart) > 500;
     if (userAction) {
-      circularsCache = {};
+      circularsCache = Object.create(null);
       grunt.log.ok('User action.'.yellow);
     }
 
-    // concat and unique all changed files
-    var changedDuringTask = grunt.util._.keys(filesChangedWithinTask);
-    filesChangedWithinTask = {};
-    var filepaths = [filepath].concat(changedDuringTask);
-    filepaths = grunt.util._.uniq(filepaths);
-    changedFilesForLiveReload = changedFilesForLiveReload.concat(filepaths);
-
-    // run tasks for changed files
-    var tasks = [];
-    for (var i = 0; i < filepaths.length; i++) {
-      var filepathsItem = filepaths[i];
-      // detect circular tasks, to prevent infinite loop
-      if (circularsCache[filepathsItem]) {
-        grunt.log.error('Circular dependency detected: ' + filepathsItem);
-        grunt.log.error('Check your esteWatch:options:dir configuration.');
-        grunt.log.error('For example, if css task generate also watched css file, we are in loop.');
-        grunt.log.error('But you probably pressed cmd-s to fastly.');
-        return;
-      }
-      circularsCache[filepathsItem] = true;
-      grunt.log.ok('File changed: ' + filepathsItem);
-      var filepathTasks = getFilepathTasks(filepathsItem);
-      tasks = tasks.concat(filepathTasks);
-    }
+    // run tasks for changed file
+    grunt.log.ok('File changed: ' + filepath);
+    var tasks = getFilepathTasks(filepath);
     tasks.push('esteWatchLiveReload', 'esteWatch');
     done();
     grunt.task.run(tasks);
+
+    //   // detect circular tasks, to prevent infinite loop
+    //   if (circularsCache[filepathsItem]) {
+    //     grunt.log.error('Circular dependency detected: ' + filepathsItem);
+    //     grunt.log.error('Check your esteWatch:options:dir configuration.');
+    //     grunt.log.error('For example, if css task generate also watched css file, we are in loop.');
+    //     grunt.log.error('But you probably pressed cmd-s to fastly.');
+    //     return;
+    //   }
+    //   circularsCache[filepathsItem] = true;
   };
 
   var notifyLiveReloadServer = function(filepaths) {
@@ -232,7 +236,10 @@ module.exports = function(grunt) {
     var config = grunt.config.get(['esteWatch', ext]);
     if (!config)
       return [];
-    return config(filepath) || [];
+    var tasks = config(filepath) || [];
+    if (!Array.isArray(tasks))
+      tasks = [tasks];
+    return tasks;
   };
 
 };
