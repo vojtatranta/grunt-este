@@ -26,7 +26,6 @@
     "require-uncache": "~0.0.1",
     "stylus": "~0.32.1",
     "temporary": "~0.0.5",
-    "tiny-lr": "git://github.com/Steida/tiny-lr.git",
     "wrench": "~1.5.1"
   },
   "devDependencies": {
