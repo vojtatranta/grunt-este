@@ -24,7 +24,7 @@ module.exports = function(grunt) {
   var changedFilesForLiveReload = [];
   var circularsCache = Object.create(null);
   var done;
-  var esteWatchTaskIsRunning = false
+  var esteWatchTaskIsRunning = false;
   var filesChangedWithinWatchTask = [];
   var firstRun = true;
   var lrServer;
@@ -59,16 +59,7 @@ module.exports = function(grunt) {
       keepThisTaskRunForeverViaHideousHack();
     }
 
-    var waitingFiles = grunt.util._.uniq(filesChangedWithinWatchTask);
-    grunt.verbose.ok('Files changed within watch task:');
-    grunt.verbose.ok(waitingFiles);
-    var ignore = filesChangedWithinWatchTask.fileWhichDispatchedChanging;
-    filesChangedWithinWatchTask = []
-    waitingFiles.forEach(function(filepath) {
-      if (filepath == ignore)
-        return;
-      onFileChange(filepath);
-    });
+    dispatchWaitingChanges();
 
   });
 
@@ -132,6 +123,19 @@ module.exports = function(grunt) {
       grunt.log.writeln(('Fatal error: ' + message).red);
       rerun();
     };
+  };
+
+  var dispatchWaitingChanges = function() {
+    var waitingFiles = grunt.util._.uniq(filesChangedWithinWatchTask);
+    grunt.verbose.ok('Files changed within watch task:');
+    grunt.verbose.ok(waitingFiles);
+    var ignoredFiles = filesChangedWithinWatchTask.fileWhichDispatchedChanging;
+    filesChangedWithinWatchTask = [];
+    waitingFiles.forEach(function(filepath) {
+      if (filepath == ignoredFiles)
+        return;
+      onFileChange(filepath);
+    });
   };
 
   var rerun = function() {
