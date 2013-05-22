@@ -22,7 +22,7 @@
     "coffee-script": "~1.6.2",
     "coffee2closure": "~0.0.14",
     "esprima": "~1.0.2",
-    "mocha": "~1.9.0",
+    "mocha": "~1.10.0",
     "require-uncache": "~0.0.1",
     "stylus": "~0.32.1",
     "temporary": "~0.0.5",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "grunt": "~0.4.1",
-    "grunt-contrib-jshint": "~0.4.3",
+    "grunt-contrib-jshint": "~0.5.4",
     "grunt-release": "~0.3.3"
   },
   "scripts": {
