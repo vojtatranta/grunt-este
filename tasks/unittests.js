@@ -40,11 +40,12 @@ module.exports = function (grunt) {
         // ignoreLeaks: false,
         // grep: string or regexp to filter tests with
       });
+      var key;
 
       // Clean globals created during tests, goog, este, soy etc...
       // Also fixes goog.base error "Namespace xy already declared.".
       if (originGlobal) {
-        for (var key in global) {
+        for (key in global) {
           if (key in originGlobal) continue;
           delete global[key];
         }
@@ -53,7 +54,7 @@ module.exports = function (grunt) {
       // store origin global
       if (!originGlobal) {
         originGlobal = {};
-        for (var key in global)
+        for (key in global)
           originGlobal[key] = true;
       }
 
