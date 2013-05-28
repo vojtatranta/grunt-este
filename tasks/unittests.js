@@ -18,6 +18,7 @@ module.exports = function (grunt) {
   var path = require('path');
   var requireUncache = require('require-uncache');
   var Tempfile = require('temporary/lib/file');
+  var originGlobal;
 
   grunt.registerMultiTask('esteUnitTests', 'Fast unit testing.',
     function() {
@@ -39,6 +40,22 @@ module.exports = function (grunt) {
         // ignoreLeaks: false,
         // grep: string or regexp to filter tests with
       });
+
+      // Clean globals created during tests, goog, este, soy etc...
+      // Also fixes goog.base error "Namespace xy already declared.".
+      if (originGlobal) {
+        for (var key in global) {
+          if (key in originGlobal) continue;
+          delete global[key];
+        }
+      }
+
+      // store origin global
+      if (!originGlobal) {
+        originGlobal = {};
+        for (var key in global)
+          originGlobal[key] = true;
+      }
 
       var basePath = options.basePath;
       var deps = getDeps(options.depsPath, options.prefix);
@@ -83,18 +100,8 @@ module.exports = function (grunt) {
         return path.resolve(file);
       });
 
-      // Clean globals created during tests, goog, este, soy etc...
-      // Also fixes goog.base error "Namespace xy already declared.".
-      var originGlobal = {};
-      for (var key in global)
-        originGlobal[key] = true;
-
       var clean = function() {
         tempNodeBaseFile.unlink();
-        for (var key in global) {
-          if (key in originGlobal) continue;
-          delete global[key];
-        }
       };
 
       var done = this.async();
