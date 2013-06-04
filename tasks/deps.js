@@ -7,6 +7,7 @@
 module.exports = function (grunt) {
 
   var path = require('path');
+  var cache = {};
 
   grunt.registerMultiTask('esteDeps', 'Google Closure dependency calculator.',
     function () {
@@ -56,6 +57,22 @@ module.exports = function (grunt) {
       var prefix = options.prefix;
       var outputFile = options.outputFile;
       var execDir = options.execDir;
+
+      // check if we really need to run deps on watch
+      if (this.filesSrc.length) {
+        var previousCacheState = JSON.stringify(cache);
+        this.filesSrc.forEach(function(fileSrc) {
+          var file = grunt.file.read(fileSrc);
+          cache[fileSrc] = {
+            requires: file.match(/goog\.require\(\s*['"](.+?)['"]\s*\)/g),
+            provides: file.match(/goog\.provide\(\s*['"](.+?)['"]\s*\)/g)
+          };
+        });
+        if (previousCacheState == JSON.stringify(cache)) {
+          grunt.log.writeln('Nothing changed.');
+          return;
+        }
+      }
 
       delete options.depsWriterPath;
       delete options.pythonBin;
