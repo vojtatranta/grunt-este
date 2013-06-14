@@ -22,12 +22,12 @@
     "coffee-script": "~1.6.3",
     "coffee2closure": "~0.0.14",
     "esprima": "~1.0.3",
-    "mocha": "~1.10.0",
+    "mocha": "~1.11.0",
     "require-uncache": "~0.0.1",
+    "sinon": "~1.7.2",
     "stylus": "~0.32.1",
     "temporary": "~0.0.5",
-    "wrench": "~1.5.1",
-    "sinon": "~1.7.2"
+    "wrench": "~1.5.1"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
