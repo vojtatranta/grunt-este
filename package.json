@@ -15,7 +15,7 @@
   "author": "Daniel Steigerwald <daniel@steigerwald.cz>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Steida/grunt-este.git"
+    "url": "https://github.com/steida/grunt-este.git"
   },
   "dependencies": {
     "coffee-script": "~1.6.3",

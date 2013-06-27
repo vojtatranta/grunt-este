@@ -4,7 +4,7 @@ Grunt tasks for Este. Documentation will be added soon.
 
 ## Usage
 
-Take a look at [Este](https://github.com/Steida/este/) application boilerplate.
+Take a look at [Este](https://github.com/steida/este/) application boilerplate.
 
 ## License
 Copyright (c) 2013 Daniel Steigerwald

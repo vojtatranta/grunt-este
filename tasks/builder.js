@@ -84,7 +84,7 @@ module.exports = function (grunt) {
          * By default, -client and -d32 (if available) are used.
          * You can add your own set of flags. They will override defaults.
          * https://groups.google.com/forum/?fromgroups=#!topic/closure-library-discuss/7w_O9-vzlj4
-         * https://github.com/Steida/grunt-este/issues/1
+         * https://github.com/steida/grunt-este/issues/1
          * @type {Array.<string>}
          */
       , javaFlags: null
