@@ -20,19 +20,19 @@
   "dependencies": {
     "chai": "~1.7.2",
     "coffee-script": "~1.6.3",
-    "coffee2closure": "~0.0.17",
-    "esprima": "~1.0.3",
-    "mocha": "~1.12.0",
+    "coffee2closure": "0.0.19",
+    "esprima": "~1.0.4",
+    "mocha": "~1.12.1",
     "require-uncache": "~0.0.2",
     "sinon": "~1.7.3",
-    "stylus": "~0.33.1",
     "temporary": "~0.0.5",
-    "wrench": "~1.5.1"
+    "wrench": "~1.5.1",
+    "stylus": "~0.37.0"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-jshint": "~0.6.0",
-    "grunt-release": "~0.3.5"
+    "grunt-release": "~0.5.1"
   },
   "scripts": {
     "test": "grunt test"
