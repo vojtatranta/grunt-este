@@ -18,16 +18,16 @@
     "url": "https://github.com/steida/grunt-este.git"
   },
   "dependencies": {
-    "chai": "~1.7.2",
+    "chai": "~1.8.0",
     "coffee-script": "~1.6.3",
     "coffee2closure": "0.0.19",
     "esprima": "~1.0.4",
-    "mocha": "~1.12.1",
+    "mocha": "~1.13.0",
     "require-uncache": "~0.0.2",
     "sinon": "~1.7.3",
     "temporary": "~0.0.5",
     "wrench": "~1.5.1",
-    "stylus": "~0.37.0"
+    "stylus": "~0.38.0"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
