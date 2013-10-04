@@ -32,7 +32,7 @@
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-jshint": "~0.6.0",
-    "grunt-release": "~0.5.1"
+    "grunt-release": "~0.6.0"
   },
   "scripts": {
     "test": "grunt test"
