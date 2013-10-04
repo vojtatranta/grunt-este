@@ -1,14 +1,6 @@
 /*
  * grunt-este
  * https://github.com/este/grunt-este
- * TODO: consider Testacular, PhantomJS, JSDOM or https://github.com/theintern/intern
- * NOTE: Mocha is runned now nospawn.
- *
- * Dev Notes
- *  Ignore these errors now: 2013-05-05 19:50 node[651] (CarbonCore.framework) FSEventStreamStart: register_with_server: ERROR: f2d_register_rpc() => (null) (-21)
- *  https://github.com/gruntjs/grunt-contrib-watch#how-do-i-fix-the-error-emfile-too-many-opened-files
- *  https://github.com/gruntjs/grunt-contrib-watch/issues/85
- *
  * Copyright (c) 2013 Daniel Steigerwald
  */
 module.exports = function (grunt) {
