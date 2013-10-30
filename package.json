@@ -6,11 +6,11 @@
     "Closure",
     "CoffeeScript",
     "Compiler",
+    "Este",
     "Google",
     "gruntplugin",
     "Mocha",
-    "Soy",
-    "Stylus"
+    "Soy"
   ],
   "author": "Daniel Steigerwald <daniel@steigerwald.cz>",
   "repository": {
@@ -26,8 +26,7 @@
     "require-uncache": "~0.0.2",
     "sinon": "~1.7.3",
     "temporary": "~0.0.5",
-    "wrench": "~1.5.1",
-    "stylus": "~0.38.0"
+    "wrench": "~1.5.1"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
