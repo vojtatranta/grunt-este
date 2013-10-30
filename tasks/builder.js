@@ -250,18 +250,20 @@ module.exports = function (grunt) {
         clearInterval(timer);
         grunt.log.write('\n');
 
-        // replace absolute paths to relative ones in source map
-        pathToSourceMap = outputFilePath + '.map';
-        sourceMap = JSON.parse(fs.readFileSync(pathToSourceMap, {encoding:'utf-8'}));
-        sourceMap.sources = sourceMap.sources.map(function (source) {
-          return path.join('/', path.relative(tempdir.path, source));
-        });
-        fs.writeFileSync(pathToSourceMap, JSON.stringify(sourceMap), {encoding:'utf-8', flag:'w'});
+        if (options.createSourceMap) {
+          // replace absolute paths to relative ones in source map
+          pathToSourceMap = outputFilePath + '.map';
+          sourceMap = grunt.file.readJSON(pathToSourceMap);
+          sourceMap.sources = sourceMap.sources.map(function (source) {
+            return path.join('/', path.relative(tempdir.path, source));
+          });
+          grunt.file.write(pathToSourceMap, JSON.stringify(sourceMap));
 
-        // append sourceMappingURL
-        if (options.appendSourceMappingURL) {
-          sourceMappingAnnotation = '//# sourceMappingURL=/' + pathToSourceMap;
-          fs.writeFileSync(outputFilePath, sourceMappingAnnotation, {encoding:'utf-8', flag:'a'});
+          // append sourceMappingURL
+          if (options.appendSourceMappingURL) {
+            sourceMappingAnnotation = '//# sourceMappingURL=/' + pathToSourceMap;
+            fs.writeFileSync(outputFilePath, sourceMappingAnnotation, {encoding:'utf-8', flag:'a'});
+          }
         }
 
         // wrench because it removes nonempty directories
@@ -448,7 +450,7 @@ module.exports = function (grunt) {
   };
 
   var getAllNamespaces = function(depsPath) {
-    var depsFile = fs.readFileSync(depsPath, 'utf8');
+    var depsFile = grunt.file.read(depsPath);
     var allNamespaces = [];
     var goog = {
       addDependency: function(src, namespaces, dependencies) {
