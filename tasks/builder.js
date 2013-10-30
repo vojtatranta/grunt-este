@@ -250,16 +250,17 @@ module.exports = function (grunt) {
         clearInterval(timer);
         grunt.log.write('\n');
 
-        if (options.createSourceMap) {
-          // replace absolute paths to relative ones in source map
-          pathToSourceMap = outputFilePath + '.map';
+        pathToSourceMap = outputFilePath + '.map';
+
+        // source map file may not exists because of error during compilation
+        if (options.createSourceMap && grunt.file.exists(pathToSourceMap)) {
           sourceMap = grunt.file.readJSON(pathToSourceMap);
-          sourceMap.sources = sourceMap.sources.map(function (source) {
-            return path.join('/', path.relative(tempdir.path, source));
-          });
+          // paths in source map are absolute paths on filesystem
+          sourceMap.sources = makePathsRelativeToWebRoot(sourceMap.sources, tempdir.path);
           grunt.file.write(pathToSourceMap, JSON.stringify(sourceMap));
 
-          // append sourceMappingURL
+          // sourceMappingURL is optional - you may not want to have source maps attached
+          // to production scripts
           if (options.appendSourceMappingURL) {
             sourceMappingAnnotation = '//# sourceMappingURL=/' + pathToSourceMap;
             fs.writeFileSync(outputFilePath, sourceMappingAnnotation, {encoding:'utf-8', flag:'a'});
@@ -471,4 +472,12 @@ module.exports = function (grunt) {
     allNamespaces.splice(idx, 1);
     return allNamespaces;
   };
+
+  var makePathsRelativeToWebRoot = function(paths, root, webroot) {
+    webroot = webroot || '/';
+    return paths.map(function(filepath) {
+      return path.join(webroot, path.relative(root, filepath));
+    });
+  };
+
 };
