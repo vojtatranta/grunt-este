@@ -112,6 +112,16 @@ module.exports = function (grunt) {
          * @type {Array.<string>}
          */
       , locales: []
+        /**
+         * Whatever to create source map or not. It will be stored to %outname%.map.
+         * @type {boolean}
+         */
+      , createSourceMap: false
+        /**
+         * Append sourceMappingURL annotation to compiled code
+         * @type {boolean}
+         */
+      , appendSourceMappingURL: false
 
       });
       var done = this.async();
@@ -203,11 +213,21 @@ module.exports = function (grunt) {
 
       makeFlagFileFromListOfFilesToCompile(tempFlagFile.path);
 
+      sourceMapArgs = [];
+
+      if (options.createSourceMap) {
+        sourceMapArgs = createArgs({
+            create_source_map: '%outname%.map',
+            source_map_format: 'V3'
+        });
+      }
+
       var compilerArgs = ['-jar']
         .concat(options.javaFlags)
         .concat(options.compilerPath)
         .concat(options.compilerFlags)
         .concat(localeArgs)
+        .concat(sourceMapArgs)
         .concat(createArgs({
           js_output_file: outputFilePath
         , js: options.depsPath
@@ -229,6 +249,20 @@ module.exports = function (grunt) {
       }, function(error, result, code) {
         clearInterval(timer);
         grunt.log.write('\n');
+
+        // replace absolute paths to relative ones in source map
+        pathToSourceMap = outputFilePath + '.map';
+        sourceMap = JSON.parse(fs.readFileSync(pathToSourceMap, {encoding:'utf-8'}));
+        sourceMap.sources = sourceMap.sources.map(function (source) {
+          return path.join('/', path.relative(tempdir.path, source));
+        });
+        fs.writeFileSync(pathToSourceMap, JSON.stringify(sourceMap), {encoding:'utf-8', flag:'w'});
+
+        // append sourceMappingURL
+        if (options.appendSourceMappingURL) {
+          sourceMappingAnnotation = '//# sourceMappingURL=/' + pathToSourceMap;
+          fs.writeFileSync(outputFilePath, sourceMappingAnnotation, {encoding:'utf-8', flag:'a'});
+        }
 
         // wrench because it removes nonempty directories
         wrench.rmdirSyncRecursive(tempdir.path);
