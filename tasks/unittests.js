@@ -10,6 +10,7 @@ module.exports = function (grunt) {
   var path = require('path');
   var requireUncache = require('require-uncache');
   var Tempfile = require('temporary/lib/file');
+  var getDeps = require('../lib/getdeps');
   var originGlobal;
 
   grunt.registerMultiTask('esteUnitTests', 'Fast unit testing.',
@@ -124,34 +125,6 @@ module.exports = function (grunt) {
 
     }
   );
-
-  /**
-    @return {Object} Example:
-      'app.start': {
-        src: 'client/app/js/start.js',
-        dependencies: [
-          'app.templates',
-          'este.dev.Monitor.create',
-          'goog.dom',
-          'goog.events']
-      }
-  */
-  var getDeps = function(depsPath, prefix) {
-    var deps = {};
-    var depsFile = fs.readFileSync(depsPath, 'utf8');
-    var goog = {
-      addDependency: function(src, namespaces, dependencies) {
-        for (var i = 0; i < namespaces.length; i++) {
-          deps[namespaces[i]] = {
-            src: src.replace(prefix, ''),
-            dependencies: dependencies
-          };
-        }
-      }
-    };
-    eval(depsFile);
-    return deps;
-  };
 
   /**
     @param {Array.<string>} testFiles

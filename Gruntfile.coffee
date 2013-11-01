@@ -22,7 +22,20 @@ module.exports = (grunt) ->
         pushTags: true
         npm: true
 
+    simplemocha:
+      options:
+        ui: 'tdd'
+        compilers: 'coffee:coffeescript'
+        # reporter: 'tap'
+
+      all:
+        src: [
+          'test/global.coffee'
+          'lib/**/*_test.coffee'
+        ]
+
   grunt.loadNpmTasks 'grunt-release'
   grunt.loadNpmTasks 'grunt-contrib-jshint'
+  grunt.loadNpmTasks 'grunt-simple-mocha'
 
-  grunt.registerTask 'test', 'jshint'
+  grunt.registerTask 'test', ['jshint', 'simplemocha']
