@@ -52,7 +52,6 @@ module.exports = function (grunt) {
       }
 
       var basePath = options.basePath;
-      var deps = getDeps(options.depsPath, options.prefix);
       var testFiles = this.filesSrc;
       var tempNodeBaseFile = new Tempfile();
 
@@ -70,24 +69,18 @@ module.exports = function (grunt) {
         return;
       }
 
-      var namespaces = getNamespaces(testFiles, deps);
-      var depsFiles = getDepsFiles(namespaces, deps);
-      var mockFile = options.mockFile;
-
-      delete options.basePath;
-      delete options.depsPath;
-      delete options.prefix;
-      delete options.mockFile;
-
-      var fixedBasePath = fixGoogBaseForNodeAndGetPath(
-        basePath,
-        tempNodeBaseFile);
-      var files = [
-        fixedBasePath,
-        mockFile
-      ];
-
-      files.push.apply(files, depsFiles);
+      var files = [];
+      if (grunt.file.exists(options.depsPath)) {
+        var deps = getDeps(options.depsPath, options.prefix);
+        var namespaces = getNamespaces(testFiles, deps);
+        var depsFiles = getDepsFiles(namespaces, deps);
+        var mockFile = options.mockFile;
+        var fixedBasePath = fixGoogBaseForNodeAndGetPath(
+          basePath,
+          tempNodeBaseFile);
+        files.push(fixedBasePath, mockFile);
+        files.push.apply(files, depsFiles);
+      }
       files.push.apply(files, testFiles);
 
       var absoluteFiles = files.map(function(file) {
@@ -99,6 +92,11 @@ module.exports = function (grunt) {
       };
 
       var done = this.async();
+
+      delete options.basePath;
+      delete options.depsPath;
+      delete options.prefix;
+      delete options.mockFile;
       var mocha = new Mocha(options);
 
       // Workaround for mocha "0 tests complete" issue.
