@@ -69,7 +69,8 @@ module.exports = function (grunt) {
         return;
       }
 
-      var files = [];
+      var globalJsPath = path.join(__dirname, '../', 'lib', 'global.js');
+      var files = [globalJsPath];
       if (grunt.file.exists(options.depsPath)) {
         var deps = getDeps(options.depsPath, options.prefix);
         var namespaces = getNamespaces(testFiles, deps);

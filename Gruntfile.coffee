@@ -30,7 +30,7 @@ module.exports = (grunt) ->
 
       all:
         src: [
-          'test/global.coffee'
+          'lib/global.js'
           'lib/**/*_test.coffee'
         ]
 
@@ -38,4 +38,4 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-jshint'
   grunt.loadNpmTasks 'grunt-simple-mocha'
 
-  grunt.registerTask 'test', ['jshint', 'simplemocha']
+  grunt.registerTask 'test', ['jshint']
