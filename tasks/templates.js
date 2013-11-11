@@ -23,11 +23,15 @@ module.exports = function (grunt) {
       });
       var filesSrc = this.filesSrc;
       var done = this.async();
-
-      detectFastJavaFlags(grunt, function(fastJavaFlags) {
-        build(options, filesSrc, done, fastJavaFlags);
-      });
-
+      
+      if (Object.keys(filesSrc).length !== 0) {
+        detectFastJavaFlags(grunt, function(fastJavaFlags) {
+          build(options, filesSrc, done, fastJavaFlags);
+        });
+      }
+      else {
+        done();
+      }
     });
 
   var build = function(options, filesSrc, done, fastJavaFlags) {
