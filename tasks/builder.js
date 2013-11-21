@@ -77,17 +77,9 @@ module.exports = function (grunt) {
       , pythonBin: 'python'
 
         /**
-         * There are several java flags, for huge compilation speed improvement.
-         * -client flag should work everywhere. Take a look into jscompiler.py.
-         * -d32 works only for Java 1.6 sometimes.
-         * -XX:+TieredCompilation should help with Java 1.7
-         * By default, -client and -d32 (if available) are used.
-         * You can add your own set of flags. They will override defaults.
-         * https://groups.google.com/forum/?fromgroups=#!topic/closure-library-discuss/7w_O9-vzlj4
-         * https://github.com/steida/grunt-este/issues/1
          * @type {Array.<string>}
          */
-      , javaFlags: null
+      , javaFlags: []
 
         /**
          * One or more input files to calculate dependencies for. The
@@ -153,13 +145,8 @@ module.exports = function (grunt) {
         };
       };
 
-      if (options.javaFlags) {
-        buildAll();
-        return;
-      }
-
       detectFastJavaFlags(grunt, function(flags) {
-        options.javaFlags = flags;
+        options.javaFlags.push.apply(options.javaFlags, flags);
         buildAll();
       });
 
