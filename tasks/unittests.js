@@ -5,100 +5,86 @@
  */
 module.exports = function (grunt) {
 
-  var fs = require('fs');
+  var jsdom = require('jsdom').jsdom;
   var Mocha = require('mocha');
   var path = require('path');
+  var previousGlobalKeys;
   var requireUncache = require('require-uncache');
-  var Tempfile = require('temporary/lib/file');
-  var getDeps = require('../lib/getdeps');
-  var originGlobal;
+  var shouldResetGoog = false;
 
-  grunt.registerMultiTask('esteUnitTests', 'Fast unit testing.',
+  // Useful global shortcuts available in every test.
+  global.assert = require('chai').assert;
+  global.sinon = require('sinon');
+
+  grunt.registerMultiTask('esteUnitTests', 'Unit testing for Este client and server code',
     function() {
 
       var options = this.options({
-        basePath: 'bower_components/closure-library/closure/goog/base.js',
-        depsPath: 'client/app/js/deps.js',
-        prefix: '../../../../../',
-        mockFile: path.join(__dirname, '../', 'lib', 'mocks.js'),
-
-        // Mocha options
-        ui: 'tdd',
-        reporter: 'dot',
-        globals: [],
-        timeout: 100
-
-        // bail: true,
-        // slow: xy,
-        // ignoreLeaks: false,
-        // grep: string or regexp to filter tests with
-      });
-      var key;
-
-      // Clean globals created during tests, goog, este, soy etc...
-      // Also fixes goog.base error "Namespace xy already declared.".
-      if (originGlobal) {
-        for (key in global) {
-          if (key in originGlobal) continue;
-          delete global[key];
+        bootstrapPath: 'bower_components/closure-library/closure/goog/bootstrap/nodejs.js',
+        depsPath: 'client/deps.js',
+        // TODO: Try to compute it.
+        prefix: '../../../../',
+        mocha: {
+          ui: 'tdd',
+          reporter: 'dot',
+          globals: [],
+          timeout: 100
         }
+      });
+
+      // Investigate why path resolving is needed.
+      var bootstrapPathResolved = path.resolve(options.bootstrapPath);
+      var depsPathResolved = path.resolve(options.depsPath);
+
+      if (shouldResetGoog) {
+        requireUncache(bootstrapPathResolved);
+        requireUncache(depsPathResolved);
+        Object.keys(global).forEach(function(key) {
+          if (previousGlobalKeys.indexOf(key) > -1) return;
+          delete global[key];
+        });
+      }
+      else {
+        shouldResetGoog = true;
       }
 
-      // store origin global
-      if (!originGlobal) {
-        originGlobal = {};
-        for (key in global)
-          originGlobal[key] = true;
-      }
+      previousGlobalKeys = Object.keys(global);
 
-      var basePath = options.basePath;
+      require(bootstrapPathResolved);
+      require(depsPathResolved);
+
+      // Investigate: Why require from module does not work.
+      goog.require('este.thirdParty.react');
+
+      // Mock browser. NOTE: Must be here because React.
+      var doc = jsdom();
+      global.window = doc.parentWindow;
+      global.document = doc.parentWindow.document;
+
       var testFiles = this.filesSrc;
-      var tempNodeBaseFile = new Tempfile();
 
-      // fix for watch mode
+      // Watch mode, map tests to tested files.
       testFiles = testFiles.map(function(file) {
         if (file.indexOf('_test.') == -1)
           file = file.replace('.', '_test.');
-        var chunks = file.split('.');
-        chunks[chunks.length - 1] = 'js';
-        return chunks.join('.');
+        return file;
       });
 
+      // Watch mode, do nothing for missing test.
       if (testFiles.length == 1 && !grunt.file.exists(testFiles[0])) {
-        grunt.log.writeln('No tests.');
         return;
       }
 
-      var globalJsPath = path.join(__dirname, '../', 'lib', 'global.js');
-      var files = [globalJsPath];
-      if (grunt.file.exists(options.depsPath)) {
-        var deps = getDeps(options.depsPath, options.prefix);
-        var namespaces = getNamespaces(testFiles, deps);
-        var depsFiles = getDepsFiles(namespaces, deps);
-        var mockFile = options.mockFile;
-        var fixedBasePath = fixGoogBaseForNodeAndGetPath(
-          basePath,
-          tempNodeBaseFile);
-        files.push(fixedBasePath, mockFile);
-        files.push.apply(files, depsFiles);
-      }
-      files.push.apply(files, testFiles);
-
-      var absoluteFiles = files.map(function(file) {
-        return path.resolve(file);
+      // Require tests deps.
+      testFiles.forEach(function(testFile) {
+        file = testFile.replace('_test.js', '.js');
+        namespaces = goog.dependencies_.pathToNames[options.prefix + file];
+        for (var namespace in namespaces) {
+          goog.require(namespace);
+        }
       });
 
-      var clean = function() {
-        tempNodeBaseFile.unlink();
-      };
-
-      var done = this.async();
-
-      delete options.basePath;
-      delete options.depsPath;
-      delete options.prefix;
-      delete options.mockFile;
-      var mocha = new Mocha(options);
+      var mocha = new Mocha(options.mocha);
 
       // Workaround for mocha "0 tests complete" issue.
       // github.com/visionmedia/mocha/issues/445#issuecomment-17693393
@@ -106,78 +92,22 @@ module.exports = function (grunt) {
         requireUncache(file);
       });
 
-      absoluteFiles.forEach(mocha.addFile.bind(mocha));
+      testFiles.forEach(function(testFile) {
+        mocha.addFile(path.resolve(testFile));
+      });
 
-      // Enforce stack if Mocha crash, for example with "Cannot read property
-      // 'required' of undefined" message.
+      // Enforce stack on Mocha crash.
+      var done = this.async();
       try {
         mocha.run(function(errCount) {
-          clean();
           done(!errCount);
         });
       }
       catch (e) {
-        clean();
         grunt.log.error(e.stack);
         done(false);
       }
 
     }
   );
-
-  /**
-    @param {Array.<string>} testFiles
-    @param {Object} deps
-    @return {Array.<string>}
-  */
-  var getNamespaces = function(testFiles, deps) {
-    var namespaces = [
-      // for DOM event simulation
-      'goog.testing.events'
-    ];
-    for (var namespace in deps) {
-      var src = deps[namespace].src;
-      if (~testFiles.indexOf(src.replace('.js', '_test.js')))
-        namespaces.push(namespace);
-    }
-    return namespaces;
-  };
-
-  /**
-    @param {Array.<string>} namespaces
-    @param {Object} deps
-    @return {Array.<string>}
-  */
-  var getDepsFiles = function(namespaces, deps) {
-    var files = [];
-    var resolve = function(namespaces) {
-      for (var i = 0, length = namespaces.length; i < length; i++) {
-        var namespace = namespaces[i];
-        if (!deps[namespace])
-          continue;
-        var src = deps[namespace].src;
-        if (~files.indexOf(src))
-          continue;
-        resolve(deps[namespace].dependencies);
-        files.push(src);
-      }
-    };
-    resolve(namespaces);
-    return files;
-  };
-
-  /**
-    @param {string} basePath
-    @param {Tempfile} tempNodeBaseFile
-    @return {string}
-  */
-  var fixGoogBaseForNodeAndGetPath = function(basePath, tempNodeBaseFile) {
-    var file = fs.readFileSync(basePath, 'utf8');
-    // fix Google Closure base.js for NodeJS
-    file = file.replace('var goog = goog || {};', 'global.goog = global.goog || {};');
-    file = file.replace('goog.global = this;', 'goog.global = global;');
-    grunt.file.write(tempNodeBaseFile.path, file, 'utf8');
-    return tempNodeBaseFile.path;
-  };
-
 };
