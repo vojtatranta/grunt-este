@@ -11,8 +11,8 @@ module.exports = function (grunt) {
 
   var path = require('path');
   var messages = require('../lib/messages');
-  
-  grunt.registerMultiTask('esteExtractMessages', 'Extract messages defined with goog.getMsg.',
+
+  grunt.registerMultiTask('esteExtractMessages', 'Extract messages defined with goog.getMsg',
     function() {
 
       var options = this.options({
@@ -23,12 +23,12 @@ module.exports = function (grunt) {
 
       var files = messages.getFiles(options.root, grunt);
       var dictionary = createDictionary(files);
-      
+
       for (var i = 0; i < options.languages.length; i++) {
         var language = options.languages[i];
         saveDictionary(dictionary, language, options.messagesPath);
       }
-      
+
     }
   );
 

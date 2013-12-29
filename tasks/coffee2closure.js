@@ -10,7 +10,7 @@ module.exports = function(grunt) {
 
   var coffee2closure = require('coffee2closure');
 
-  grunt.registerMultiTask('coffee2closure', 'Fixes CoffeeScript compiled output for Closure Compiler', function() {
+  grunt.registerMultiTask('coffee2closure', 'Fixes CoffeeScript compiled output for Google Closure Compiler', function() {
 
     var count = 0;
     this.files.forEach(function (f) {

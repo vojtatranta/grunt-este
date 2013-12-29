@@ -16,7 +16,7 @@
  */
 module.exports = function (grunt) {
 
-  grunt.registerMultiTask('esteCompiler', 'Task for Google Closure Compiler.',
+  grunt.registerMultiTask('esteCompiler', 'Simple Google Closure Compiler wrapper',
     function () {
 
       var options = this.options({
