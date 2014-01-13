@@ -22,7 +22,7 @@
     "coffee-script": "~1.6.3",
     "coffee2closure": "0.0.20",
     "esprima": "~1.0.4",
-    "mocha": "~1.16.2",
+    "mocha": "~1.17.0",
     "require-uncache": "~0.0.2",
     "sinon": "~1.7.3",
     "temporary": "~0.0.5",
