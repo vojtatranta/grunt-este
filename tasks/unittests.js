@@ -11,6 +11,7 @@ module.exports = function (grunt) {
   var previousGlobalKeys;
   var requireUncache = require('require-uncache');
   var shouldResetGoog = false;
+  var React;
 
   // Useful global shortcuts available in every test.
   global.assert = require('chai').assert;
@@ -53,17 +54,19 @@ module.exports = function (grunt) {
       require(bootstrapPathResolved);
       require(depsPathResolved);
 
-      // Investigate: Why require from module does not work.
+      // Lazy preload React.
       goog.require('este.thirdParty.react');
+      React = React || goog.global.React;
 
-      // Mock browser. NOTE: Must be here because React.
+      // Mock browser.
       var doc = jsdom();
       global.window = doc.parentWindow;
       global.document = doc.parentWindow.document;
+      global.React = global.window.React = React;
 
       var testFiles = this.filesSrc;
 
-      // Watch mode, map tests to tested files.
+      // Watch node, map tests to tested files.
       testFiles = testFiles.map(function(file) {
         if (file.indexOf('_test.') == -1)
           file = file.replace('.', '_test.');
