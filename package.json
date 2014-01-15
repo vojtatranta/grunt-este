@@ -1,6 +1,6 @@
 {
   "name": "grunt-este",
-  "version": "2.4.3",
+  "version": "2.4.4",
   "description": "Everything you need for Google Closure. Precise configuration, Soy templates, localization, TDD stack, and even CoffeeScript support. File watcher included.",
   "keywords": [
     "Closure",
