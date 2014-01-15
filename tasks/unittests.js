@@ -10,7 +10,6 @@ module.exports = function (grunt) {
   var path = require('path');
   var previousGlobalKeys;
   var requireUncache = require('require-uncache');
-  var shouldResetGoog = false;
   var React;
 
   // Useful global shortcuts available in every test.
@@ -34,25 +33,8 @@ module.exports = function (grunt) {
       });
 
       // Investigate why path resolving is needed.
-      var bootstrapPathResolved = path.resolve(options.bootstrapPath);
-      var depsPathResolved = path.resolve(options.depsPath);
-
-      if (shouldResetGoog) {
-        requireUncache(bootstrapPathResolved);
-        requireUncache(depsPathResolved);
-        Object.keys(global).forEach(function(key) {
-          if (previousGlobalKeys.indexOf(key) > -1) return;
-          delete global[key];
-        });
-      }
-      else {
-        shouldResetGoog = true;
-      }
-
-      previousGlobalKeys = Object.keys(global);
-
-      require(bootstrapPathResolved);
-      require(depsPathResolved);
+      require(path.resolve(options.bootstrapPath));
+      require(path.resolve(options.depsPath));
 
       // Lazy preload React.
       goog.require('este.thirdParty.react');
