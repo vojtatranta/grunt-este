@@ -8,7 +8,7 @@ module.exports = function (grunt) {
   var jsdom = require('jsdom').jsdom;
   var Mocha = require('mocha');
   var path = require('path');
-  var previousGlobalKeys;
+  var previousGlobalKeys = [];
   var requireUncache = require('require-uncache');
   var React;
 
@@ -31,12 +31,25 @@ module.exports = function (grunt) {
           timeout: 100
         }
       });
+      var bootstrapPath = path.resolve(options.bootstrapPath);
+      var depsPath = path.resolve(options.depsPath);
 
-      // Investigate why path resolving is needed.
-      require(path.resolve(options.bootstrapPath));
-      require(path.resolve(options.depsPath));
+      // Delete global keys created for one test run.
+      // Uncache does not help.
+      previousGlobalKeys.forEach(function(key) {
+        delete global[key];
+      });
+
+      // Need to be uncached.
+      requireUncache(bootstrapPath);
+      requireUncache(depsPath);
+
+      var globalKeys = Object.keys(global);
+      require(bootstrapPath);
+      require(depsPath);
 
       // Lazy preload React.
+      // TODO: Don't embed React. It sucks in Node.js. Fix it for Closure.
       goog.require('este.thirdParty.react');
       React = React || goog.global.React;
 
@@ -48,7 +61,7 @@ module.exports = function (grunt) {
 
       var testFiles = this.filesSrc;
 
-      // Watch node, map tests to tested files.
+      // Watch mode, map tests to tested files.
       testFiles = testFiles.map(function(file) {
         if (file.indexOf('_test.') == -1)
           file = file.replace('.', '_test.');
@@ -62,11 +75,17 @@ module.exports = function (grunt) {
 
       // Require tests deps.
       testFiles.forEach(function(testFile) {
-        file = testFile.replace('_test.js', '.js');
-        namespaces = goog.dependencies_.pathToNames[options.prefix + file];
+        var file = testFile.replace('_test.js', '.js');
+        var namespaces = goog.dependencies_.pathToNames[options.prefix + file];
         for (var namespace in namespaces) {
+          // TODO: For gulp back to manual resolve because uncache
+          // does not work reliable.
           goog.require(namespace);
         }
+      });
+
+      previousGlobalKeys = Object.keys(global).filter(function(key) {
+        return globalKeys.indexOf(key) == -1;
       });
 
       var mocha = new Mocha(options.mocha);
