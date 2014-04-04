@@ -15,6 +15,7 @@ module.exports = function (grunt) {
   // Useful global shortcuts available in every test.
   global.assert = require('chai').assert;
   global.sinon = require('sinon');
+  global.jsdom = jsdom;
 
   grunt.registerMultiTask('esteUnitTests', 'Super-fast unit testing for Google Closure with Mocha in Node.js',
     function() {
