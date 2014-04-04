@@ -25,6 +25,7 @@ module.exports = function (grunt) {
         depsPath: 'client/deps.js',
         // TODO: Try to compute it.
         prefix: '../../../../',
+        useReact: true,
         mocha: {
           ui: 'tdd',
           reporter: 'dot',
@@ -49,16 +50,19 @@ module.exports = function (grunt) {
       require(bootstrapPath);
       require(depsPath);
 
-      // Lazy preload React.
-      // TODO: Don't embed React. It sucks in Node.js. Fix it for Closure.
-      goog.require('este.thirdParty.react');
-      React = React || goog.global.React;
-
       // Mock browser.
       var doc = jsdom();
       global.window = doc.parentWindow;
       global.document = doc.parentWindow.document;
-      global.React = global.window.React = React;
+
+      if (options.useReact) {
+          // Lazy preload React.
+          // TODO: Don't embed React. It sucks in Node.js. Fix it for Closure.
+          goog.require('este.thirdParty.react');
+          React = React || goog.global.React;
+          global.React = global.window.React = React;
+      }
+
 
       var testFiles = this.filesSrc;
 
