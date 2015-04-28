@@ -71,14 +71,12 @@ module.exports = function (grunt) {
       // Require tests deps.
       testFiles.forEach(function(testFile) {
         var file = testFile.replace('_test.js', '.js');
-        namespaces = {};
         for (var namespace in goog.dependencies_.nameToPath)
         {
           if (goog.dependencies_.nameToPath[namespace] == options.prefix + file)
             goog.require(namespace);
         }
       });
-
 
       previousGlobalKeys = Object.keys(global).filter(function(key) {
         return globalKeys.indexOf(key) == -1;
